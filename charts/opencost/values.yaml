@@ -306,9 +306,9 @@ opencost:
       # -- Exporter container image registry
       registry: ghcr.io
       # -- Exporter container image name
-      repository: opencost/opencost
+      repository: knpsh/opencost-yc
       # -- Exporter container image tag
-      tag: "1.121.1@sha256:50052694785db32174332670920faf7b7f55d32a91ba3caec1e9207a58338ff5"
+      tag: "1.121.1-yc.1"
       # -- Exporter container image pull policy
       pullPolicy: IfNotPresent
       # -- Override the full image name for development purposes
@@ -435,6 +435,32 @@ opencost:
       secret_access_key: ""
       # -- AWS secret key id
       access_key_id: ""
+    # Yandex Cloud Billing SKU pricing provider.
+    yandexCloud:
+      # -- Enable the Yandex Cloud provider and Billing SKU integration.
+      enabled: false
+      # -- Yandex Cloud gRPC API endpoint. Use the Kazakhstan endpoint for KZ installations.
+      apiEndpoint: api.cloud.yandex.net:443
+      # -- Billing currency requested from the SKU API.
+      currency: RUB
+      # -- Optional billing account ID for contract-specific prices.
+      billingAccountId: ""
+      # -- Interval between full Billing SKU catalog refreshes.
+      pricingRefreshInterval: 6h
+      serviceAccountKey:
+        # -- Existing Secret containing the authorized service-account JSON key (recommended).
+        existingSecret: ""
+        # -- Raw authorized-key JSON. Prefer --set-file; this value is stored in Helm release data.
+        value: ""
+        # -- Key inside either the existing or chart-generated Secret.
+        secretKey: authorized-key.json
+      skuMapping:
+        # -- Existing ConfigMap containing a YAML SKU mapping override.
+        existingConfigMap: ""
+        # -- Inline YAML SKU mapping override; the chart creates a ConfigMap when set.
+        value: ""
+        # -- Key inside either the existing or chart-generated ConfigMap.
+        configMapKey: mapping.yaml
     # -- A list of volume mounts to be added to the pod
     extraVolumeMounts: []
     # -- List of additional environment variables to set in the container
@@ -673,14 +699,17 @@ opencost:
   ui:
     # -- Enable OpenCost UI
     enabled: true
+    # -- Initial three-letter display currency for browsers without a saved preference.
+    # Empty derives the currency from Yandex Cloud when enabled, otherwise USD.
+    defaultCurrency: ""
     image:
       # -- UI container image registry
       registry: ghcr.io
       # -- UI container image name
-      repository: opencost/opencost-ui
+      repository: knpsh/opencost-ui-yc
       # -- UI container image tag
-      # @default -- `""` (use appVersion in Chart.yaml)
-      tag: "1.121.1@sha256:a2eaa7f585f418deba878e81cf571bdcb7ead07becf18a158138e2a39d28dc5c"
+      # @default -- `"1.121.1-yc.1"` pinned to its published multi-architecture digest
+      tag: "1.121.1-yc.1@sha256:907b2eabded057491f16f5940494a47c072fe32627e549a5213cdd89149ff11c"
       # -- UI container image pull policy
       pullPolicy: IfNotPresent
       # -- Override the full image name for development purposes

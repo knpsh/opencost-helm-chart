@@ -1,0 +1,12 @@
+{{- $yc := .Values.opencost.exporter.yandexCloud -}}
+{{- if and $yc.enabled $yc.skuMapping.value (not $yc.skuMapping.existingConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opencost.yandexCloud.mappingConfigMapName" . }}
+  namespace: {{ include "opencost.namespace" . }}
+  labels: {{- include "opencost.labels" . | nindent 4 }}
+data:
+  {{ $yc.skuMapping.configMapKey }}: |
+{{ $yc.skuMapping.value | toString | nindent 4 }}
+{{- end }}

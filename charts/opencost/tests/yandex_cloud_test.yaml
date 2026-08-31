@@ -1,0 +1,198 @@
+suite: Yandex Cloud deployment
+templates:
+  - templates/deployment.yaml
+  - templates/configmap-custom-pricing.yaml
+  - templates/configmap-frontend.yaml
+  - templates/configmap-metrics-config.yaml
+  - templates/secret-cloud-integration.yaml
+  - templates/secret.yaml
+  - templates/secret-admin-token.yaml
+  - templates/secret-yandex-cloud.yaml
+  - templates/configmap-yandex-cloud.yaml
+release:
+  name: opencost
+  namespace: opencost
+tests:
+  - it: uses the YC exporter image by default
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/knpsh/opencost-yc:1.121.1-yc.1
+
+  - it: uses the YC UI image and defaults to USD without a YC provider
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: ghcr.io/knpsh/opencost-ui-yc:1.121.1-yc.1@sha256:907b2eabded057491f16f5940494a47c072fe32627e549a5213cdd89149ff11c
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content: {name: DEFAULT_CURRENCY, value: USD}
+
+  - it: mounts an existing service-account Secret and mapping ConfigMap
+    template: templates/deployment.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
+      opencost.exporter.yandexCloud.skuMapping.existingConfigMap: yc-mapping
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: CLOUD_PROVIDER, value: Yandex}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: CONFIG_PATH, value: /tmp/opencost-yandex-config}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_API_ENDPOINT, value: "api.cloud.yandex.net:443"}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_BILLING_CURRENCY, value: RUB}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_SERVICE_ACCOUNT_KEY_FILE, value: /var/run/secrets/yandex-cloud/authorized-key.json}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_SKU_MAPPING_FILE, value: /var/run/config/yandex-cloud/mapping.yaml}
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content: {name: DEFAULT_CURRENCY, value: RUB}
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: yandex-cloud-key
+            secret:
+              secretName: yc-key
+              items:
+                - key: authorized-key.json
+                  path: authorized-key.json
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: yandex-cloud-mapping
+            configMap:
+              name: yc-mapping
+              items:
+                - key: mapping.yaml
+                  path: mapping.yaml
+
+  - it: renders billing account refresh interval and a custom image
+    template: templates/deployment.yaml
+    set:
+      opencost.exporter.image.fullImageName: registry.example/yc:test
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
+      opencost.exporter.yandexCloud.billingAccountId: billing-account
+      opencost.exporter.yandexCloud.pricingRefreshInterval: 30m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example/yc:test
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_BILLING_ACCOUNT_ID, value: billing-account}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_PRICING_REFRESH_INTERVAL, value: 30m}
+
+---
+suite: Yandex Cloud managed resources
+templates:
+  - templates/secret-yandex-cloud.yaml
+  - templates/configmap-yandex-cloud.yaml
+release:
+  name: opencost
+  namespace: opencost
+tests:
+  - it: creates a managed service-account Secret
+    template: templates/secret-yandex-cloud.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.value: '{"id":"test"}'
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: opencost-yandex-cloud
+      - equal:
+          path: data["authorized-key.json"]
+          value: eyJpZCI6InRlc3QifQ==
+
+  - it: creates an inline mapping ConfigMap
+    template: templates/configmap-yandex-cloud.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
+      opencost.exporter.yandexCloud.skuMapping.value: "version: 1"
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data["mapping.yaml"]
+          value: "version: 1\n"
+
+  - it: creates no managed resources with defaults
+    asserts:
+      - hasDocuments:
+          count: 0
+
+---
+suite: Yandex Cloud validation
+templates:
+  - templates/deployment.yaml
+  - templates/configmap-custom-pricing.yaml
+  - templates/configmap-frontend.yaml
+  - templates/configmap-metrics-config.yaml
+  - templates/secret-cloud-integration.yaml
+  - templates/secret.yaml
+  - templates/secret-admin-token.yaml
+  - templates/secret-yandex-cloud.yaml
+  - templates/configmap-yandex-cloud.yaml
+tests:
+  - it: rejects a missing service-account key
+    template: templates/deployment.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Yandex Cloud is enabled but no service-account key source is configured
+
+  - it: rejects simultaneous existing and managed keys
+    template: templates/deployment.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
+      opencost.exporter.yandexCloud.serviceAccountKey.value: '{}'
+    asserts:
+      - failedTemplate:
+          errorMessage: opencost.exporter.yandexCloud.serviceAccountKey.existingSecret and value are mutually exclusive
+
+  - it: rejects simultaneous existing and inline mappings
+    template: templates/deployment.yaml
+    set:
+      opencost.exporter.yandexCloud.enabled: true
+      opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
+      opencost.exporter.yandexCloud.skuMapping.existingConfigMap: yc-mapping
+      opencost.exporter.yandexCloud.skuMapping.value: "version: 1"
+    asserts:
+      - failedTemplate:
+          errorMessage: opencost.exporter.yandexCloud.skuMapping.existingConfigMap and value are mutually exclusive
+
+  - it: accepts an explicit UI currency override
+    template: templates/deployment.yaml
+    set:
+      opencost.ui.defaultCurrency: KZT
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content: {name: DEFAULT_CURRENCY, value: KZT}
+
+  - it: rejects an invalid UI currency
+    template: templates/deployment.yaml
+    set:
+      opencost.ui.defaultCurrency: roubles
+    asserts:
+      - failedTemplate:
+          errorMessage: opencost.ui.defaultCurrency must be a three-letter currency code

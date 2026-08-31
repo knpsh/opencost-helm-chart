@@ -9,6 +9,8 @@ templates:
   - templates/secret-cloud-integration.yaml
   - templates/secret.yaml
   - templates/secret-admin-token.yaml
+  - templates/secret-yandex-cloud.yaml
+  - templates/configmap-yandex-cloud.yaml
 release:
   name: opencost
   namespace: default

@@ -19,6 +19,26 @@ To install the chart with the release name `opencost`:
 $ helm install opencost opencost/{{ template "chart.name" . }}
 ```
 
+## Yandex Cloud pricing
+
+This YC variant reads Compute Cloud SKU prices with a service-account authorized key.
+Use an existing Secret in production:
+
+```console
+kubectl -n opencost create secret generic opencost-yc-key --from-file=authorized-key.json=/path/to/key.json
+helm upgrade --install opencost ./charts/opencost -n opencost \
+  --set opencost.exporter.yandexCloud.enabled=true \
+  --set opencost.exporter.yandexCloud.serviceAccountKey.existingSecret=opencost-yc-key
+```
+
+For local testing, `--set-file opencost.exporter.yandexCloud.serviceAccountKey.value=/path/to/key.json`
+creates the Secret. This convenience mode stores the private key in Helm release data.
+
+When Yandex Cloud is enabled, the UI defaults to the configured YC billing
+currency for browsers without a saved preference. It can be overridden with
+`opencost.ui.defaultCurrency`. A currency previously saved in the UI settings
+remains a per-browser override.
+
 {{ template "chart.requirementsSection" . }}
 
 {{ template "chart.valuesSection" . }}

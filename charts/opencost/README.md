@@ -25,6 +25,26 @@ To install the chart with the release name `opencost`:
 $ helm install opencost opencost/opencost
 ```
 
+## Yandex Cloud pricing
+
+This YC variant reads Compute Cloud SKU prices with a service-account authorized key.
+Use an existing Secret in production:
+
+```console
+kubectl -n opencost create secret generic opencost-yc-key --from-file=authorized-key.json=/path/to/key.json
+helm upgrade --install opencost ./charts/opencost -n opencost \
+  --set opencost.exporter.yandexCloud.enabled=true \
+  --set opencost.exporter.yandexCloud.serviceAccountKey.existingSecret=opencost-yc-key
+```
+
+For local testing, `--set-file opencost.exporter.yandexCloud.serviceAccountKey.value=/path/to/key.json`
+creates the Secret. This convenience mode stores the private key in Helm release data.
+
+When Yandex Cloud is enabled, the UI defaults to the configured YC billing
+currency for browsers without a saved preference. It can be overridden with
+`opencost.ui.defaultCurrency`. A currency previously saved in the UI settings
+remains a per-browser override.
+
 ## Values
 
 | Key | Type | Default | Description |
@@ -220,6 +240,7 @@ $ helm install opencost opencost/opencost
 | opencost.tolerations | list | `[]` | Toleration labels for pod assignment |
 | opencost.topologySpreadConstraints | list | `[]` | Assign custom TopologySpreadConstraints rules |
 | opencost.ui.enabled | bool | `true` | Enable OpenCost UI |
+| opencost.ui.defaultCurrency | string | `""` | Initial three-letter display currency for browsers without a saved preference. Empty derives the currency from Yandex Cloud when enabled, otherwise USD. |
 | opencost.ui.extraEnv | list | `[]` | A list of environment variables to be added to the pod |
 | opencost.ui.extraVolumeMounts | list | `[]` | A list of volume mounts to be added to the pod |
 | opencost.ui.httpRoute | object | `{"annotations":{},"enabled":false,"hostnames":[],"labels":{},"parentRefs":[{"name":"","namespace":"","sectionName":""}],"rules":[{"backendRefs":[{"name":"","port":9090}],"matches":[{"path":{"type":"PathPrefix","value":"/"}}]}]}` | HTTPRoute for OpenCost UI (Gateway API) |
@@ -232,8 +253,8 @@ $ helm install opencost opencost/opencost
 | opencost.ui.image.fullImageName | string | `nil` | Override the full image name for development purposes |
 | opencost.ui.image.pullPolicy | string | `"IfNotPresent"` | UI container image pull policy |
 | opencost.ui.image.registry | string | `"ghcr.io"` | UI container image registry |
-| opencost.ui.image.repository | string | `"opencost/opencost-ui"` | UI container image name |
-| opencost.ui.image.tag | string | `""` (use appVersion in Chart.yaml) | UI container image tag |
+| opencost.ui.image.repository | string | `"knpsh/opencost-ui-yc"` | UI container image name |
+| opencost.ui.image.tag | string | `"1.121.1-yc.1"` pinned to its published multi-architecture digest | UI container image tag |
 | opencost.ui.ingress.annotations | object | `{}` | Annotations for Ingress resource |
 | opencost.ui.ingress.enabled | bool | `false` | Ingress for OpenCost UI |
 | opencost.ui.ingress.hosts | list | See [values.yaml](values.yaml) | A list of host rules used to configure the Ingress |

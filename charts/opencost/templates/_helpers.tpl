@@ -132,6 +132,48 @@ Compute the cloud integration secret name when enabled.
   {{- end -}}
 {{- end -}}
 
+{{/* Validate Yandex Cloud authentication and optional mapping sources. */}}
+{{- define "opencost.yandexCloud.configCheck" -}}
+  {{- $yc := .Values.opencost.exporter.yandexCloud -}}
+  {{- if $yc.enabled -}}
+    {{- if and $yc.serviceAccountKey.existingSecret $yc.serviceAccountKey.value -}}
+      {{- fail "opencost.exporter.yandexCloud.serviceAccountKey.existingSecret and value are mutually exclusive" -}}
+    {{- end -}}
+    {{- if and (not $yc.serviceAccountKey.existingSecret) (not $yc.serviceAccountKey.value) -}}
+      {{- fail "Yandex Cloud is enabled but no service-account key source is configured" -}}
+    {{- end -}}
+    {{- if and $yc.skuMapping.existingConfigMap $yc.skuMapping.value -}}
+      {{- fail "opencost.exporter.yandexCloud.skuMapping.existingConfigMap and value are mutually exclusive" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "opencost.yandexCloud.secretName" -}}
+  {{- .Values.opencost.exporter.yandexCloud.serviceAccountKey.existingSecret | default (printf "%s-yandex-cloud" (include "opencost.fullname" .)) -}}
+{{- end -}}
+
+{{- define "opencost.yandexCloud.mappingConfigMapName" -}}
+  {{- .Values.opencost.exporter.yandexCloud.skuMapping.existingConfigMap | default (printf "%s-yandex-cloud-mapping" (include "opencost.fullname" .)) -}}
+{{- end -}}
+
+{{/*
+Resolve the UI's initial currency. An explicit UI value wins. Otherwise use the
+YC billing currency when YC is enabled, and retain the upstream USD behavior
+for other deployments. The browser's saved preference can still override this
+runtime default.
+*/}}
+{{- define "opencost.ui.defaultCurrency" -}}
+  {{- $currency := upper (trim (.Values.opencost.ui.defaultCurrency | default "")) -}}
+  {{- if and (not $currency) .Values.opencost.exporter.yandexCloud.enabled -}}
+    {{- $currency = upper (trim .Values.opencost.exporter.yandexCloud.currency) -}}
+  {{- end -}}
+  {{- $currency = $currency | default "USD" -}}
+  {{- if not (regexMatch "^[A-Z]{3}$" $currency) -}}
+    {{- fail "opencost.ui.defaultCurrency must be a three-letter currency code" -}}
+  {{- end -}}
+  {{- $currency -}}
+{{- end -}}
+
 {{/*
 Common labels
 */}}
@@ -294,6 +336,8 @@ apiVersion: networking.k8s.io/v1beta1
   "secret-cloud-integration.yaml"
   "secret.yaml"
   "secret-admin-token.yaml"
+  "secret-yandex-cloud.yaml"
+  "configmap-yandex-cloud.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
