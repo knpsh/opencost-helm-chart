@@ -2,9 +2,9 @@
 
 OpenCost and OpenCost UI
 
-![Version: 2.5.29-yc.4](https://img.shields.io/badge/Version-2.5.29--yc.4-informational?style=flat-square)
+![Version: 2.5.29-yc.5](https://img.shields.io/badge/Version-2.5.29--yc.5-informational?style=flat-square)
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
-![AppVersion: 1.121.1-yc.3](https://img.shields.io/badge/AppVersion-1.121.1--yc.3-informational?style=flat-square)
+![AppVersion: 1.121.1-yc.4](https://img.shields.io/badge/AppVersion-1.121.1--yc.4-informational?style=flat-square)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/opencost)](https://artifacthub.io/packages/search?repo=opencost)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/opencost-oci)](https://artifacthub.io/packages/search?repo=opencost-oci)
 
@@ -28,6 +28,10 @@ $ helm install opencost opencost/opencost
 ## Yandex Cloud pricing
 
 This YC variant reads Compute Cloud SKU prices with a service-account authorized key.
+It also reads the current Managed Service for Kubernetes master configuration and
+reports its CPU and RAM charges as an OpenCost cluster-management asset. Grant the
+service account `k8s.viewer` on the folder containing the cluster in addition to
+the required Billing access.
 Use an existing Secret in production:
 
 ```console
@@ -44,6 +48,13 @@ When Yandex Cloud is enabled, the UI defaults to the configured YC billing
 currency for browsers without a saved preference. It can be overridden with
 `opencost.ui.defaultCurrency`. A currency previously saved in the UI settings
 remains a per-browser override.
+
+The Yandex cluster ID is discovered from the `yandex.cloud/node-group-id` node
+label, so it is not configured in Helm. Master configuration is refreshed every
+minute by default (`opencost.exporter.yandexCloud.mksRefreshInterval`). OpenCost
+retains the last successful master price during a transient API failure. Master
+cost history starts when this metric is deployed; earlier autoscaling changes
+cannot be reconstructed.
 
 ## Values
 

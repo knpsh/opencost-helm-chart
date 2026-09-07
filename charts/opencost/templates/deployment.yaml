@@ -248,6 +248,8 @@ spec:
               value: "/var/run/secrets/yandex-cloud/authorized-key.json"
             - name: YC_PRICING_REFRESH_INTERVAL
               value: {{ .Values.opencost.exporter.yandexCloud.pricingRefreshInterval | quote }}
+            - name: YC_MKS_REFRESH_INTERVAL
+              value: {{ .Values.opencost.exporter.yandexCloud.mksRefreshInterval | quote }}
             {{- if .Values.opencost.exporter.yandexCloud.billingAccountId }}
             - name: YC_BILLING_ACCOUNT_ID
               value: {{ .Values.opencost.exporter.yandexCloud.billingAccountId | quote }}

@@ -308,7 +308,7 @@ opencost:
       # -- Exporter container image name
       repository: knpsh/opencost-yc
       # -- Exporter container image tag
-      tag: "1.121.1-yc.3"
+      tag: "1.121.1-yc.4"
       # -- Exporter container image pull policy
       pullPolicy: IfNotPresent
       # -- Override the full image name for development purposes
@@ -447,6 +447,8 @@ opencost:
       billingAccountId: ""
       # -- Interval between full Billing SKU catalog refreshes.
       pricingRefreshInterval: 6h
+      # -- Interval between Managed Kubernetes master configuration refreshes.
+      mksRefreshInterval: 1m
       serviceAccountKey:
         # -- Existing Secret containing the authorized service-account JSON key (recommended).
         existingSecret: ""

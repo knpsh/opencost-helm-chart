@@ -18,7 +18,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: ghcr.io/knpsh/opencost-yc:1.121.1-yc.3
+          value: ghcr.io/knpsh/opencost-yc:1.121.1-yc.4
 
   - it: uses the YC UI image and defaults to USD without a YC provider
     template: templates/deployment.yaml
@@ -54,6 +54,9 @@ tests:
           content: {name: YC_SERVICE_ACCOUNT_KEY_FILE, value: /var/run/secrets/yandex-cloud/authorized-key.json}
       - contains:
           path: spec.template.spec.containers[0].env
+          content: {name: YC_MKS_REFRESH_INTERVAL, value: 1m}
+      - contains:
+          path: spec.template.spec.containers[0].env
           content: {name: YC_SKU_MAPPING_FILE, value: /var/run/config/yandex-cloud/mapping.yaml}
       - contains:
           path: spec.template.spec.containers[1].env
@@ -85,6 +88,7 @@ tests:
       opencost.exporter.yandexCloud.serviceAccountKey.existingSecret: yc-key
       opencost.exporter.yandexCloud.billingAccountId: billing-account
       opencost.exporter.yandexCloud.pricingRefreshInterval: 30m
+      opencost.exporter.yandexCloud.mksRefreshInterval: 45s
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
@@ -95,6 +99,9 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content: {name: YC_PRICING_REFRESH_INTERVAL, value: 30m}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: YC_MKS_REFRESH_INTERVAL, value: 45s}
 
 ---
 suite: Yandex Cloud managed resources
