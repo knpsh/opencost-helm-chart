@@ -33,7 +33,7 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: cloud-integration
-            mountPath: /var/configs/cloud-integration.json
+            mountPath: /var/configs/cloud-integration/cloud-integration.json
             subPath: cloud-integration.json
             readOnly: true
   - it: generates integration configuration
