@@ -308,7 +308,7 @@ opencost:
       # -- Exporter container image name
       repository: knpsh/opencost-yc
       # -- Exporter container image tag
-      tag: "1.121.1-yc.4"
+      tag: "1.121.1-yc.5"
       # -- Exporter container image pull policy
       pullPolicy: IfNotPresent
       # -- Override the full image name for development purposes
@@ -581,6 +581,16 @@ opencost:
   cloudCost:
     # -- Enable cloud cost ingestion and querying, dependant on valid integration credentials
     enabled: false
+    yandex:
+      # -- Generate a Yandex Usage API integration using the exporter key mount.
+      enabled: false
+      # -- Required billing account; separate from optional SKU contract-price lookup.
+      billingAccountId: ""
+      usageEndpoint: billing.api.cloud.yandex.net:443
+      # -- Billing dates are preserved in UTC-labeled OpenCost daily buckets.
+      billingTimezone: Europe/Moscow
+      # -- Empty means the entire billing account.
+      folderIds: []
     # -- Number of hours between each run of the Cloud Cost pipeline
     refreshRateHours: 6
     # -- Number of days into the past that a Cloud Cost standard run will query for

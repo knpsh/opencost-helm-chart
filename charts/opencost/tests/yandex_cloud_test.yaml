@@ -18,7 +18,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: ghcr.io/knpsh/opencost-yc:1.121.1-yc.4
+          value: ghcr.io/knpsh/opencost-yc:1.121.1-yc.5
 
   - it: uses the YC UI image and defaults to USD without a YC provider
     template: templates/deployment.yaml

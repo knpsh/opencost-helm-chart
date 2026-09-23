@@ -114,6 +114,23 @@ produce silent data loss or runtime Pod start failures:
 Cloud integration source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "opencost.cloudIntegration.secretConfigCheck" -}}
+  {{- if .Values.opencost.cloudCost.yandex.enabled -}}
+    {{- if or .Values.opencost.cloudIntegrationSecret .Values.opencost.cloudIntegrationJSON -}}
+      {{- fail "Yandex CloudCost convenience settings and manual cloud integration sources are mutually exclusive" -}}
+    {{- end -}}
+    {{- if not (and .Values.opencost.cloudCost.enabled .Values.opencost.exporter.yandexCloud.enabled) -}}
+      {{- fail "Yandex CloudCost requires cloudCost.enabled and exporter.yandexCloud.enabled" -}}
+    {{- end -}}
+    {{- if not .Values.opencost.cloudCost.yandex.billingAccountId -}}
+      {{- fail "Yandex CloudCost requires billingAccountId" -}}
+    {{- end -}}
+    {{- if ne (int .Values.opencost.exporter.replicas) 1 -}}
+      {{- fail "Yandex CloudCost requires exactly one exporter replica" -}}
+    {{- end -}}
+    {{- if and (ne .Values.opencost.exporter.yandexCloud.currency "RUB") (eq .Values.opencost.cloudCost.yandex.billingTimezone "Europe/Moscow") -}}
+      {{- fail "Set an explicit billingTimezone for non-RUB Yandex CloudCost" -}}
+    {{- end -}}
+  {{- end -}}
   {{- if and .Values.opencost.cloudIntegrationSecret .Values.opencost.cloudIntegrationJSON -}}
     {{- fail "opencost.cloudIntegrationSecret and opencost.cloudIntegrationJSON are mutually exclusive. Please specify only one." -}}
   {{- end -}}
@@ -123,13 +140,19 @@ Cloud integration source contents check. Either the Secret must be specified or 
 Compute the cloud integration secret name when enabled.
 */}}
 {{- define "opencost.cloudIntegration.secretName" -}}
-  {{- if or .Values.opencost.cloudIntegrationSecret .Values.opencost.cloudIntegrationJSON -}}
+  {{- if or .Values.opencost.cloudIntegrationSecret .Values.opencost.cloudIntegrationJSON .Values.opencost.cloudCost.yandex.enabled -}}
     {{- if .Values.opencost.cloudIntegrationSecret -}}
       {{- .Values.opencost.cloudIntegrationSecret -}}
     {{- else -}}
       {{- printf "%s-cloud-integration" (include "opencost.fullname" .) -}}
     {{- end -}}
   {{- end -}}
+{{- end -}}
+
+{{- define "opencost.yandexCloud.usageJSON" -}}
+{{- $yc := .Values.opencost.exporter.yandexCloud -}}
+{{- $usage := .Values.opencost.cloudCost.yandex -}}
+{{- dict "yandex" (dict "usageAPI" (list (dict "billingAccountId" $usage.billingAccountId "serviceAccountKeyPath" "/var/run/secrets/yandex-cloud/authorized-key.json" "apiEndpoint" $yc.apiEndpoint "usageEndpoint" $usage.usageEndpoint "currency" $yc.currency "billingTimezone" $usage.billingTimezone "folderIds" $usage.folderIds))) | toJson -}}
 {{- end -}}
 
 {{/* Validate Yandex Cloud authentication and optional mapping sources. */}}
