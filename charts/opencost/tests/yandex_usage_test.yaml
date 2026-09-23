@@ -30,6 +30,11 @@ tests:
             name: CLOUD_COST_ENABLED
             value: "true"
       - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CLOUD_COST_RESOLUTION_1D_RETENTION
+            value: "30"
+      - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: cloud-integration

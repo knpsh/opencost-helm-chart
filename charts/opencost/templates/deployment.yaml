@@ -353,6 +353,10 @@ spec:
               value: {{ .Values.opencost.retention1h | quote }}
             - name: CLOUD_COST_ENABLED
               value: {{ .Values.opencost.cloudCost.enabled | quote }}
+            {{- if .Values.opencost.cloudCost.yandex.enabled }}
+            - name: CLOUD_COST_RESOLUTION_1D_RETENTION
+              value: "30"
+            {{- end }}
             - name: CLOUD_COST_MONTH_TO_DATE_INTERVAL
               value: {{ .Values.opencost.cloudCost.monthToDateInterval | quote }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
