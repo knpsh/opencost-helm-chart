@@ -95,7 +95,7 @@ pod spec should match snapshot:
         app.kubernetes.io/name: opencost
         app.kubernetes.io/part-of: opencost
         app.kubernetes.io/version: 1.121.1-yc.5
-        helm.sh/chart: opencost-2.5.29-yc.6
+        helm.sh/chart: opencost-2.5.29-yc.7
       name: RELEASE-NAME-opencost
       namespace: NAMESPACE
     spec:
@@ -199,7 +199,7 @@ pod spec should match snapshot:
                   value: "9090"
                 - name: DEFAULT_CURRENCY
                   value: USD
-              image: ghcr.io/knpsh/opencost-ui-yc:1.121.1-yc.1@sha256:907b2eabded057491f16f5940494a47c072fe32627e549a5213cdd89149ff11c
+              image: ghcr.io/knpsh/opencost-ui-yc:1.121.1-yc.2@sha256:74e779eca78368d139cc45cfbdc951bb86eb9d01f20c52f07bc7265551b912a4
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 3

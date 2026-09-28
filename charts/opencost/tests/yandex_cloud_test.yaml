@@ -25,7 +25,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[1].image
-          value: ghcr.io/knpsh/opencost-ui-yc:1.121.1-yc.1@sha256:907b2eabded057491f16f5940494a47c072fe32627e549a5213cdd89149ff11c
+          value: ghcr.io/knpsh/opencost-ui-yc:1.121.1-yc.2@sha256:74e779eca78368d139cc45cfbdc951bb86eb9d01f20c52f07bc7265551b912a4
       - contains:
           path: spec.template.spec.containers[1].env
           content: {name: DEFAULT_CURRENCY, value: USD}
